@@ -1,19 +1,27 @@
 import { HomePage } from "../page-objects/home_page";
 import { LoginPage } from "../page-objects/login_page";
+import { faker } from "@faker-js/faker";
 
 describe("Dashboasrd atomic tests", { testIsolation: false }, () => {
   before(() => {
     cy.clearAllCookies();
     cy.clearAllLocalStorage();
     cy.clearAllSessionStorage();
-    const username = Cypress.env("tegb_username");
-    const password = Cypress.env("tegb_password");
+    const username = faker.internet.userName();
+    const password = faker.internet.password({ length: 15 });
+    const email = faker.internet.exampleEmail();
+    new LoginPage()
+      .openTegb()
+      .clickregisterNewUser()
+      .typeNewUsername(username)
+      .typeNewPassword(password)
+      .typeNewEmail(email)
+      .clickRegister();
     new LoginPage()
       .openTegb()
       .typeUsername(username)
       .typePassword(password)
       .clickLogin();
-    cy.wait("@login_api");
   });
 
   context("Header tests", () => {

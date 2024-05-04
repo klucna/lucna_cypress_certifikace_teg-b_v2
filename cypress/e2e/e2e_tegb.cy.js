@@ -2,19 +2,23 @@ import { faker } from "@faker-js/faker";
 import { LoginPage } from "../page-objects/login_page";
 import { LoginApi } from "../api/login_api";
 import { HomePage } from "../page-objects/home_page";
+import { AccountApi } from "../api/account_api";
 
-describe("Register and Login new User E2E test Tegb", () => {
+describe("Register, Login new User and create Account E2E test Tegb", () => {
+  let username, password, email, firstname, lastname, phonenumber;
+
   beforeEach(() => {
+    username = faker.internet.userName();
+    password = faker.internet.password({ length: 15 });
+    email = faker.internet.exampleEmail();
+    firstname = faker.person.firstName();
+    lastname = faker.person.lastName();
+    phonenumber = faker.phone.number();
     new LoginPage().openTegb();
   });
   it("Create new user with a new account test", () => {
-    const username = faker.internet.userName();
-    const password = faker.internet.password({ length: 15 });
-    const email = faker.internet.exampleEmail();
-    const firstname = faker.person.firstName();
-    const lastname = faker.person.lastName();
-    const phonenumber = faker.phone.number();
     const loginApi = new LoginApi();
+    const accountApi = new AccountApi();
     cy.intercept("/tegb/profile").as("profile_api");
     cy.intercept("/tegb/accounts").as("accounts_api");
     new LoginPage()
@@ -28,16 +32,8 @@ describe("Register and Login new User E2E test Tegb", () => {
     loginApi.login(username, password).then((response) => {
       expect(response.status).to.eq(201);
       const token = response.body.access_token;
-      cy.request({
-        method: "POST",
-        url: Cypress.env("tegb_be_url") + "tegb/accounts/create",
-        headers: {
-          authorization: "Bearer " + token,
-        },
-        body: {
-          startBalance: 1000,
-          type: "Test",
-        },
+      accountApi.createAccount(token, 1000, "Test").then((accountResponse) => {
+        expect(accountResponse.status).to.eq(201);
       });
       new LoginPage()
         .openTegb()
